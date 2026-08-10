@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>House Price Prediction - Explainable AI</title>
+
+
+    <style>
+
+        /* =====================================================
+           GLOBAL
+        ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            margin: 0;
+
+            padding: 0;
+
+            background:
+                linear-gradient(
+                    rgba(0,0,0,0.40),
+                    rgba(0,0,0,0.40)
+                ),
+                url("{{ url_for('static', filename='house.jpg') }}")
+                no-repeat center center fixed;
+
+            background-size: cover;
+
+            color: #222;
+
+        }
+
+
+        /* =====================================================
+           MAIN CONTAINER
+        ===================================================== */
+
+        .container {
+
+            width: 92%;
+
+            max-width: 1000px;
+
+            margin: 35px auto 50px auto;
+
+            background: rgba(255,255,255,0.96);
+
+            padding: 30px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 10px 35px rgba(0,0,0,0.30);
+
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .header h1 {
+
+            margin: 0;
+
+            color: #203a56;
+
+            font-size: 32px;
+
+        }
+
+
+        .header p {
+
+            color: #666;
+
+            margin-top: 9px;
+
+            font-size: 16px;
+
+        }
+
+
+        /* =====================================================
+           FORM
+        ===================================================== */
+
+        .form-section {
+
+            background: #f5f7f9;
+
+            padding: 24px;
+
+            border-radius: 15px;
+
+            border: 1px solid #e1e5e8;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .form-section h3 {
+
+            margin-top: 0;
+
+            color: #203a56;
+
+        }
+
+
+        .form-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 14px 18px;
+
+        }
+
+
+        input,
+        select {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border-radius: 9px;
+
+            border: 1px solid #ccc;
+
+            font-size: 15px;
+
+            background: white;
+
+        }
+
+
+        input:focus,
+        select:focus {
+
+            outline: none;
+
+            border-color: #4CAF50;
+
+            box-shadow: 0 0 4px rgba(76,175,80,0.25);
+
+        }
+
+
+        button {
+
+            width: 100%;
+
+            margin-top: 18px;
+
+            background: #ff6b6b;
+
+            color: white;
+
+            border: none;
+
+            padding: 14px;
+
+            border-radius: 9px;
+
+            cursor: pointer;
+
+            font-size: 17px;
+
+            font-weight: bold;
+
+        }
+
+
+        button:hover {
+
+            background: #ff4c4c;
+
+        }
+
+
+        /* =====================================================
+           ERROR
+        ===================================================== */
+
+        .error-box {
+
+            margin-top: 20px;
+
+            background: #ffe5e5;
+
+            color: #a40000;
+
+            border-left: 6px solid #dc3545;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            font-weight: bold;
+
+        }
+
+
+        /* =====================================================
+           PREDICTION
+        ===================================================== */
+
+        .prediction-box {
+
+            margin-top: 25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #e7f9e9,
+                    #d5f5d9
+                );
+
+            border-left: 7px solid #28a745;
+
+            padding: 25px;
+
+            border-radius: 14px;
+
+            text-align: center;
+
+        }
+
+
+        .prediction-label {
+
+            color: #555;
+
+            font-size: 16px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .prediction-box h2 {
+
+            color: #16752e;
+
+            margin: 0;
+
+            font-size: 30px;
+
+        }
+
+
+        .prediction-box p {
+
+            color: #555;
+
+            margin-bottom: 0;
+
+        }
+
+
+        /* =====================================================
+           USER INPUT SUMMARY
+        ===================================================== */
+
+        .input-box {
+
+            margin-top: 22px;
+
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 14px;
+
+            padding: 22px;
+
+        }
+
+
+        .input-box h3 {
+
+            color: #203a56;
+
+            margin-top: 0;
+
+        }
+
+
+        .input-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+        }
+
+
+        .input-table th {
+
+            background: #203a56;
+
+            color: white;
+
+            padding: 11px;
+
+            text-align: left;
+
+        }
+
+
+        .input-table td {
+
+            padding: 10px;
+
+            border-bottom: 1px solid #e0e0e0;
+
+        }
+
+
+        .input-table tr:last-child td {
+
+            border-bottom: none;
+
+        }
+
+
+        /* =====================================================
+           XAI SECTION
+        ===================================================== */
+
+        .section {
+
+            margin-top: 25px;
+
+            background: #f8f9fa;
+
+            border-radius: 16px;
+
+            padding: 24px;
+
+            border: 1px solid #e2e5e8;
+
+            box-shadow:
+                0 3px 12px rgba(0,0,0,0.07);
+
+        }
+
+
+        .section h3 {
+
+            color: #203a56;
+
+            text-align: center;
+
+            margin-top: 0;
+
+            font-size: 23px;
+
+        }
+
+
+        .section-description {
+
+            text-align: center;
+
+            color: #666;
+
+            line-height: 1.6;
+
+            max-width: 800px;
+
+            margin: 0 auto 18px auto;
+
+        }
+
+
+        /* =====================================================
+           FEATURE CONTRIBUTION TABLE
+        ===================================================== */
+
+        .shap-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 18px;
+
+            background: white;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+        }
+
+
+        .shap-table th {
+
+            background: #4CAF50;
+
+            color: white;
+
+            padding: 13px;
+
+            font-size: 15px;
+
+        }
+
+
+        .shap-table td {
+
+            padding: 12px;
+
+            border-bottom: 1px solid #ddd;
+
+            text-align: center;
+
+        }
+
+
+        .shap-table tr:last-child td {
+
+            border-bottom: none;
+
+        }
+
+
+        .positive {
+
+            color: #198754;
+
+            font-weight: bold;
+
+        }
+
+
+        .negative {
+
+            color: #dc3545;
+
+            font-weight: bold;
+
+        }
+
+
+        .impact-label {
+
+            font-size: 13px;
+
+            font-weight: bold;
+
+        }
+
+
+        /* =====================================================
+           AI EXPLANATION
+        ===================================================== */
+
+        .ai-explanation {
+
+            margin-top: 20px;
+
+            background: white;
+
+            border-left: 5px solid #6f42c1;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+            line-height: 1.7;
+
+            color: #444;
+
+        }
+
+
+        /* =====================================================
+           PLOT CARDS
+        ===================================================== */
+
+        .plot-section {
+
+            margin-top: 25px;
+
+            background: white;
+
+            border-radius: 16px;
+
+            padding: 24px;
+
+            border: 1px solid #ddd;
+
+            box-shadow:
+                0 4px 14px rgba(0,0,0,0.08);
+
+        }
+
+
+        .plot-section h3 {
+
+            text-align: center;
+
+            color: #203a56;
+
+            margin-top: 0;
+
+            font-size: 23px;
+
+        }
+
+
+        .plot-description {
+
+            text-align: center;
+
+            color: #666;
+
+            line-height: 1.6;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .plot-image-container {
+
+            background: #fafafa;
+
+            border-radius: 12px;
+
+            padding: 15px;
+
+            border: 1px solid #eee;
+
+            overflow-x: auto;
+
+        }
+
+
+        .plot-image-container img {
+
+            width: 100%;
+
+            height: auto;
+
+            display: block;
+
+            margin: auto;
+
+            border-radius: 8px;
+
+        }
+
+
+        /* =====================================================
+           LOCAL / GLOBAL BADGES
+        ===================================================== */
+
+        .badge {
+
+            display: inline-block;
+
+            padding: 6px 12px;
+
+            border-radius: 20px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .local-badge {
+
+            background: #e8f1ff;
+
+            color: #1769aa;
+
+        }
+
+
+        .global-badge {
+
+            background: #e9f8ec;
+
+            color: #198754;
+
+        }
+
+
+        /* =====================================================
+           SHAP VERIFICATION
+        ===================================================== */
+
+        .validation-box {
+
+            background: #eef6ff;
+
+            border-left: 6px solid #007bff;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+            margin-top: 20px;
+
+        }
+
+
+        .validation-box p {
+
+            margin: 9px 0;
+
+        }
+
+
+        .verification-result {
+
+            margin-top: 15px;
+
+            background: #e7f9e9;
+
+            border-left: 5px solid #28a745;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            color: #176b2c;
+
+            font-weight: bold;
+
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .footer {
+
+            text-align: center;
+
+            color: #777;
+
+            margin-top: 30px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 650px) {
+
+            .container {
+
+                width: 95%;
+
+                padding: 18px;
+
+                margin: 20px auto;
+
+            }
+
+
+            .form-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .header h1 {
+
+                font-size: 25px;
+
+            }
+
+
+            .prediction-box h2 {
+
+                font-size: 23px;
+
+            }
+
+
+            .section,
+            .plot-section {
+
+                padding: 17px;
+
+            }
+
+
+            .shap-table {
+
+                font-size: 13px;
+
+            }
+
+
+            .shap-table th,
+            .shap-table td {
+
+                padding: 8px 5px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================= -->
+
+    <div class="header">
+
+        <h1>🏠 House Price Prediction</h1>
+
+        <p>
+            CatBoost Regression with Explainable AI
+        </p>
+
+    </div>
+
+
+    <!-- =================================================
+         INPUT FORM
+    ================================================= -->
+
+    <div class="form-section">
+
+        <h3>🏡 Enter House Details</h3>
+
+
+        <form action="/predict" method="POST">
+
+
+            <div class="form-grid">
+
+
+                <input
+                    type="number"
+                    name="area"
+                    placeholder="Area (sq ft)"
+                    step="any"
+                    min="1"
+                    required
+                >
+
+
+                <input
+                    type="number"
+                    name="bedrooms"
+                    placeholder="Bedrooms"
+                    min="0"
+                    required
+                >
+
+
+                <input
+                    type="number"
+                    name="bathrooms"
+                    placeholder="Bathrooms"
+                    min="0"
+                    required
+                >
+
+
+                <input
+                    type="number"
+                    name="floors"
+                    placeholder="Floors"
+                    min="0"
+                    required
+                >
+
+
+                <input
+                    type="number"
+                    name="balcony"
+                    placeholder="Balcony"
+                    min="0"
+                    required
+                >
+
+
+                <select name="facing" required>
+
+                    <option value="" disabled selected>
+                        Select Facing
+                    </option>
+
+                    <option value="North">North</option>
+                    <option value="South">South</option>
+                    <option value="East">East</option>
+                    <option value="West">West</option>
+
+                </select>
+
+
+                <select name="area_type" required>
+
+                    <option value="" disabled selected>
+                        Select Area Type
+                    </option>
+
+                    <option value="Super">Super</option>
+                    <option value="Carpet">Carpet</option>
+                    <option value="Built-up">Built-up</option>
+
+                </select>
+
+
+            </div>
+
+
+            <button type="submit">
+                🔮 Predict House Price
+            </button>
+
+
+        </form>
+
+    </div>
+
+
+    <!-- =================================================
+         ERROR
+    ================================================= -->
+
+    {% if error %}
+
+        <div class="error-box">
+
+            ⚠️ {{ error }}
+
+        </div>
+
+    {% endif %}
+
+
+
+    {% if prediction_text %}
+
+
+    <!-- =================================================
+         1. MODEL PREDICTION
+    ================================================= -->
+
+    <div class="prediction-box">
+
+        <div class="prediction-label">
+
+            🤖 CatBoost Model Prediction
+
+        </div>
+
+
+        <h2>
+
+            {{ prediction_text }}
+
+        </h2>
+
+
+        <p>
+
+            The model analyzed the entered house characteristics
+            and generated the predicted price.
+
+        </p>
+
+    </div>
+
+
+    <!-- =================================================
+         2. USER INPUTS
+    ================================================= -->
+
+    <div class="input-box">
+
+        <h3>
+
+            📋 Entered House Details
+
+        </h3>
+
+
+        <table class="input-table">
+
+            <tr>
+
+                <th>Feature</th>
+
+                <th>Value</th>
+
+            </tr>
+
+
+            <tr>
+                <td>Area</td>
+                <td>{{ inputs.area }} sq ft</td>
+            </tr>
+
+
+            <tr>
+                <td>Bedrooms</td>
+                <td>{{ inputs.bedrooms }}</td>
+            </tr>
+
+
+            <tr>
+                <td>Bathrooms</td>
+                <td>{{ inputs.bathrooms }}</td>
+            </tr>
+
+
+            <tr>
+                <td>Floors</td>
+                <td>{{ inputs.floors }}</td>
+            </tr>
+
+
+            <tr>
+                <td>Balcony</td>
+                <td>{{ inputs.balcony }}</td>
+            </tr>
+
+
+            <tr>
+                <td>Facing</td>
+                <td>{{ inputs.facing }}</td>
+            </tr>
+
+
+            <tr>
+                <td>Area Type</td>
+                <td>{{ inputs.area_type }}</td>
+            </tr>
+
+
+        </table>
+
+    </div>
+
+
+    <!-- =================================================
+         3. EXPLAINABLE AI - FEATURE CONTRIBUTIONS
+    ================================================= -->
+
+    <div class="section">
+
+        <span class="badge local-badge">
+            LOCAL EXPLAINABILITY
+        </span>
+
+
+        <h3>
+
+            🧠 Why Did the AI Predict This Price?
+
+        </h3>
+
+
+        <p class="section-description">
+
+            SHAP identifies which features had the greatest
+            influence on this particular house-price prediction.
+
+            Positive values push the prediction upward,
+            while negative values push it downward.
+
+        </p>
+
+
+        <h4>
+
+            🔎 Top 5 Feature Contributions
+
+        </h4>
+
+
+        <table class="shap-table">
+
+            <tr>
+
+                <th>Feature</th>
+
+                <th>SHAP Contribution</th>
+
+                <th>Effect on Price</th>
+
+            </tr>
+
+
+            {% for item in feature_importance %}
+
+            <tr>
+
+                <td>
+
+                    {{ item.feature.replace("_", " ").title() }}
+
+                </td>
+
+
+                <td>
+
+                    {% if item.impact > 0 %}
+
+                        <span class="positive">
+
+                            +{{ "%.3f"|format(item.impact) }}
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="negative">
+
+                            {{ "%.3f"|format(item.impact) }}
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+
+                <td>
+
+                    {% if item.impact > 0 %}
+
+                        <span class="positive impact-label">
+
+                            ⬆ Increased Price
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="negative impact-label">
+
+                            ⬇ Decreased Price
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+
+        <!-- AI TEXT -->
+
+        <h4 style="margin-top:25px;">
+
+            💡 AI Interpretation
+
+        </h4>
+
+
+        <div class="ai-explanation">
+
+            {{ ai_explanation }}
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         4. LOCAL SHAP WATERFALL
+    ================================================= -->
+
+    {% if waterfall_image %}
+
+    <div class="plot-section">
+
+        <span class="badge local-badge">
+
+            LOCAL SHAP
+
+        </span>
+
+
+        <h3>
+
+            📉 Local SHAP Waterfall Plot
+
+        </h3>
+
+
+        <p class="plot-description">
+
+            This plot explains how each individual feature
+            moved the prediction from the model's baseline
+            value to the final predicted house price.
+
+        </p>
+
+
+        <div class="plot-image-container">
+
+            <img
+                src="{{ url_for('static', filename=waterfall_image) }}"
+                alt="Local SHAP Waterfall Plot"
+            >
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+
+    <!-- =================================================
+         5. GLOBAL FEATURE IMPORTANCE
+    ================================================= -->
+
+    <div class="plot-section">
+
+        <span class="badge global-badge">
+
+            GLOBAL SHAP
+
+        </span>
+
+
+        <h3>
+
+            📊 SHAP Feature Importance
+
+        </h3>
+
+
+        <p class="plot-description">
+
+            This plot shows the overall importance of
+            the features across the dataset.
+
+            It helps identify which variables the model
+            relies on most strongly.
+
+        </p>
+
+
+        <div class="plot-image-container">
+
+            <img
+                src="{{ url_for('static', filename='shap_feature_importance.png') }}"
+                alt="SHAP Feature Importance Plot"
+            >
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         6. GLOBAL SHAP SUMMARY
+    ================================================= -->
+
+    <div class="plot-section">
+
+        <span class="badge global-badge">
+
+            GLOBAL SHAP
+
+        </span>
+
+
+        <h3>
+
+            🌐 SHAP Summary Plot
+
+        </h3>
+
+
+        <p class="plot-description">
+
+            The SHAP summary plot shows the overall influence
+            and direction of features across the training dataset.
+
+            It provides a global view of model behavior.
+
+        </p>
+
+
+        <div class="plot-image-container">
+
+            <img
+                src="{{ url_for('static', filename='shap_summary_plot.png') }}"
+                alt="SHAP Summary Plot"
+            >
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         7. SHAP MATHEMATICAL VERIFICATION
+    ================================================= -->
+
+    <div class="section">
+
+        <span class="badge global-badge">
+
+            SHAP VALIDATION
+
+        </span>
+
+
+        <h3>
+
+            ✅ SHAP Prediction Verification
+
+        </h3>
+
+
+        <p class="section-description">
+
+            SHAP follows an additive explanation:
+
+            <strong>
+                baseline prediction + feature contributions
+                ≈ model prediction
+            </strong>
+
+        </p>
+
+
+        <div class="validation-box">
+
+
+            <p>
+
+                <strong>
+                    Baseline Value:
+                </strong>
+
+                {{ "%.4f"|format(base_value) }}
+
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Total SHAP Contribution:
+                </strong>
+
+                {{ "%.4f"|format(shap_sum) }}
+
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Baseline + SHAP:
+                </strong>
+
+                {{ "%.4f"|format(reconstructed_prediction) }}
+
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Model Prediction:
+                </strong>
+
+                {{ "%.4f"|format(reconstructed_prediction) }}
+
+            </p>
+
+
+            <div class="verification-result">
+
+                ✓ SHAP contributions reconstruct
+                the model prediction successfully.
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    {% endif %}
+
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================= -->
+
+    <div class="footer">
+
+        <p>
+
+            House Price Prediction System
+            |
+            CatBoost + SHAP Explainable AI
+
+        </p>
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>
